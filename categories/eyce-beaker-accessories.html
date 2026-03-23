@@ -19,6 +19,13 @@
             <div class="sidebar-section">Eyce</div>
             <a href="../eyce.html" class="sidebar-link">Shop All Eyce</a>
             <a href="../categories/eyce-accessories.html" class="sidebar-link child">Accessories</a><a href="../categories/eyce-beaker-accessories.html" class="sidebar-link child">Beaker Accessories</a><a href="../categories/eyce-collector-accessories.html" class="sidebar-link child">Collector Accessories</a><a href="../categories/eyce-general-accessories.html" class="sidebar-link child">General Accessories</a><a href="../categories/eyce-hammer-pop.html" class="sidebar-link child">Hammer POP</a><a href="../categories/eyce-oraflex-rig.html" class="sidebar-link child">Oraflex Rig</a><a href="../categories/eyce-pv1-vaporizer.html" class="sidebar-link child">PV1 Vaporizer</a><a href="../categories/eyce-rig-20-accessories.html" class="sidebar-link child">Rig 2.0 Accessories</a><a href="../categories/eyce-rig-20-pop.html" class="sidebar-link child">Rig 2.0 POP</a><a href="../categories/eyce-shorty-pop.html" class="sidebar-link child">Shorty POP</a><a href="../categories/eyce-sidecar-pop.html" class="sidebar-link child">Sidecar POP</a><a href="../categories/eyce-spoon-accessories.html" class="sidebar-link child">Spoon Accessories</a><a href="../categories/eyce-spoon-pop.html" class="sidebar-link child">Spoon POP</a><a href="../categories/eyce-wholesale.html" class="sidebar-link child">Wholesale</a>
+            <div class="sidebar-community">
+                <h4>Power in Numbers</h4>
+                <p>Joining our Discord helps us demonstrate community engagement to distributors, unlocking cheaper wholesale prices that we pass directly to you.</p>
+                <a href="../community.html" class="link">Learn more</a>
+                <a href="https://discord.gg/dm8deA2u" target="_blank" class="btn" style="background: var(--gold); color: #000; padding: 8px; font-size: 11px; width: 100%; box-sizing: border-box;">Join the Mission</a>
+            </div>
+
             <div class="sidebar-footer">
                 <a href="../login.html" class="sidebar-link">Log In</a>
                 <a href="../signup.html" class="sidebar-link">Sign Up</a>
@@ -53,6 +60,7 @@
         </main>
     </div>
     
+        <!-- Product Modal -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
                 <button class="modal-close" id="modal-close">&times;</button>
@@ -68,8 +76,36 @@
                     <div class="variant-label" id="v-label">Options</div>
                     <div class="swatch-group" id="swatches"></div>
                     
-                    <button class="btn modal-buy-btn" onclick="alert('Checkout integration pending')">Add to Cart</button>
+                    <button class="btn modal-buy-btn" id="checkout-btn">Checkout</button>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Checkout Modal -->
+        <div class="modal-overlay" id="checkout-overlay">
+            <div class="modal" style="max-width: 500px; flex-direction: column; padding: 40px;">
+                <button class="modal-close" id="checkout-close">&times;</button>
+                <h2 class="modal-title" style="margin-bottom: 5px;">Secure Checkout</h2>
+                <p class="modal-desc" id="checkout-item-desc" style="margin-bottom: 25px; font-weight: bold; color: var(--gold);"></p>
+                <form id="checkout-form">
+                    <div class="input-box"><label>Full Name *</label><input type="text" id="c_name" required></div>
+                    <div class="input-box"><label>Email Address *</label><input type="email" id="c_email" required></div>
+                    <div style="display: flex; gap: 15px;">
+                        <div class="input-box" style="flex: 1;"><label>Phone Number *</label><input type="tel" id="c_phone" required></div>
+                        <div class="input-box" style="flex: 1;"><label>Discord Username (Optional)</label><input type="text" id="c_discord" placeholder="e.g. user#1234"></div>
+                    </div>
+                    <div class="input-box">
+                        <label>Shipping Address *</label>
+                        <input type="text" id="c_address" placeholder="Street Address" required style="margin-bottom: 10px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="c_city" placeholder="City" required style="flex: 2;">
+                            <input type="text" id="c_state" placeholder="State" required style="flex: 1;">
+                            <input type="text" id="c_zip" placeholder="ZIP" required style="flex: 1;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 15px; font-size: 15px; padding: 15px;" id="c_submit">Submit Order</button>
+                </form>
+                <div id="checkout-feedback" style="margin-top: 15px; font-size: 14px; font-weight: bold; text-align: center; display: none;"></div>
             </div>
         </div>
         

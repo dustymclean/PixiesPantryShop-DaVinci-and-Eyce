@@ -10,6 +10,11 @@
     .sidebar-link.child { padding-left: 15px; font-size: 13px; color: #555; }
     .sidebar-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); }
     
+    .sidebar-community { margin-top: 30px; padding: 15px; background: #111; color: #fff; border-radius: 8px; }
+    .sidebar-community h4 { margin: 0 0 10px; font-size: 12px; color: var(--gold); text-transform: uppercase; }
+    .sidebar-community p { font-size: 11px; line-height: 1.4; margin: 0 0 10px; color: #ccc; }
+    .sidebar-community a.link { color: #fff; font-size: 11px; text-decoration: underline; display: block; margin-bottom: 10px; }
+    
     .main-wrapper { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
     .main-content { padding: 40px 50px; flex: 1; }
     
@@ -25,9 +30,14 @@
     .card-title { font-size: 16px; font-weight: 600; margin: 0 0 10px; flex: 1; line-height: 1.4; }
     .card-price { font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 15px; }
     .btn { display: inline-block; background: #000; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 700; text-transform: uppercase; text-align: center; border: none; cursor: pointer; transition: background 0.2s; }
-    .btn:hover { background: var(--gold); }
+    .btn:hover { background: var(--gold); color: #000; }
     .btn-outline { background: transparent; color: #000; border: 1px solid #000; }
     .btn-outline:hover { background: #000; color: #fff; }
+    
+    /* Input box for forms */
+    .input-box { margin-bottom: 15px; text-align: left; }
+    .input-box label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
+    .input-box input { width: 100%; border: 1px solid var(--border); padding: 10px; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
     
     /* Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
