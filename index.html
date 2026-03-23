@@ -740,6 +740,27 @@
         </main>
     </div>
     
+        <!-- Global Cart Button -->
+        <div class="cart-float" id="cart-float" title="View Cart">
+            🛒<div class="cart-badge" id="cart-badge">0</div>
+        </div>
+        
+        <!-- Cart Slide-out / Modal -->
+        <div class="modal-overlay" id="cart-overlay">
+            <div class="modal cart-modal">
+                <button class="modal-close" id="cart-close">&times;</button>
+                <h2 class="modal-title" style="margin-bottom: 5px;">Your Shopping Cart</h2>
+                <div class="cart-items-container" id="cart-items-container">
+                    <!-- JS injects cart items here -->
+                </div>
+                <div class="cart-total-row">
+                    <span>Total</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button class="btn" id="proceed-checkout-btn" style="width: 100%; padding: 15px; font-size: 16px;">Proceed to Checkout</button>
+            </div>
+        </div>
+
         <!-- Product Modal -->
         <div class="modal-overlay" id="modal-overlay">
             <div class="modal">
@@ -756,7 +777,7 @@
                     <div class="variant-label" id="v-label">Options</div>
                     <div class="swatch-group" id="swatches"></div>
                     
-                    <button class="btn modal-buy-btn" id="checkout-btn">Checkout</button>
+                    <button class="btn modal-buy-btn" id="add-to-cart-btn">Add to Cart</button>
                 </div>
             </div>
         </div>
@@ -766,7 +787,7 @@
             <div class="modal" style="max-width: 500px; flex-direction: column; padding: 40px;">
                 <button class="modal-close" id="checkout-close">&times;</button>
                 <h2 class="modal-title" style="margin-bottom: 5px;">Secure Checkout</h2>
-                <p class="modal-desc" id="checkout-item-desc" style="margin-bottom: 25px; font-weight: bold; color: var(--gold);"></p>
+                <div id="checkout-item-desc" style="margin-bottom: 25px; color: #444;"></div>
                 <form id="checkout-form">
                     <div class="input-box"><label>Full Name *</label><input type="text" id="c_name" required></div>
                     <div class="input-box"><label>Email Address *</label><input type="email" id="c_email" required></div>
