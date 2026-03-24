@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://synergyimports.pixiespantryshop.com/sitemap.xml
