@@ -457,6 +457,15 @@ def generate_site():
             <h1 class="page-title">{title}</h1>
             <div class="page-subtitle">{subtitle}</div>
             <div class="sort-filter-controls" style="margin-bottom: 25px; text-align: right;">
+                
+                <select id="filter-brand" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
+                    <option value="all">All Brands</option>
+                    <option value="Eyce">Eyce</option>
+                    <option value="DaVinci">DaVinci</option>
+                </select>
+                <select id="filter-category" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
+                    <option value="all">All Categories</option>
+                </select>
                 <select id="sort-by" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
                     <option value="default">Sort By</option>
                     <option value="brand-asc">Brand (A-Z)</option>

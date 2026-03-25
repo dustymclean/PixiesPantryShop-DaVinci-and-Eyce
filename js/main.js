@@ -69,29 +69,45 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        sortBySelect.addEventListener('change', (event) => {
-            const sortBy = event.target.value;
-            let sortedProducts = [...allProducts]; // Create a shallow copy to sort
-
+                
+        
+        // -- FILTER LOGIC --
+        const brandFilter = document.getElementById('filter-brand');
+        const catFilter = document.getElementById('filter-category');
+        
+        function applyFiltersAndSort() {
+            let filtered = [...allProducts];
+            
+            if (brandFilter && brandFilter.value !== 'all') {
+                filtered = filtered.filter(p => p.brand === brandFilter.value);
+            }
+            if (catFilter && catFilter.value !== 'all') {
+                filtered = filtered.filter(p => p.product_type === catFilter.value);
+            }
+            
+            const sortBy = sortBySelect ? sortBySelect.value : 'default';
             switch (sortBy) {
                 case 'brand-asc':
-                    sortedProducts.sort((a, b) => a.brand.localeCompare(b.brand));
+                    filtered.sort((a, b) => (a.brand||'').localeCompare(b.brand||''));
                     break;
                 case 'category-asc':
-                    sortedProducts.sort((a, b) => (a.product_type || '').localeCompare(b.product_type || ''));
+                    filtered.sort((a, b) => (a.product_type||'').localeCompare(b.product_type||''));
                     break;
                 case 'price-asc':
-                    sortedProducts.sort((a, b) => a.min_price - b.min_price);
-                    break;
-                case 'default':
-                default:
-                    // Keep original order (or the order from allProducts)
+                    filtered.sort((a, b) => (a.min_price||0) - (b.min_price||0));
                     break;
             }
-            renderProductGrid(sortedProducts);
-        });
-        
-        // -- 1. CART LOGIC --
+            renderProductGrid(filtered);
+        }
+
+        if (sortBySelect) sortBySelect.addEventListener('change', applyFiltersAndSort);
+        if (brandFilter) brandFilter.addEventListener('change', applyFiltersAndSort);
+        if (catFilter) catFilter.addEventListener('change', applyFiltersAndSort);
+
+        // INITIAL RENDER
+        applyFiltersAndSort();
+
+// -- 1. CART LOGIC --
         
         function updateCart() {
             localStorage.setItem('pixies_cart', JSON.stringify(cart));
@@ -331,32 +347,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 checkoutFeedback.textContent = "Error submitting order. Please try again or contact support.";
                 cSubmit.disabled = false;
                 cSubmit.textContent = "Submit Order";
-            }\
-        };\
-        \
-        \
-        // -- AGE GATE --\
-        (function() {\
-            const overlay = document.getElementById('age-gate-overlay');\
-            if (!overlay) return;\
-            if (localStorage.getItem('pixies_age_verified') === 'true') {\
-                overlay.style.display = 'none';\
-            }\
-        })();\
-        window.ageGateEnter = function() {\
-            localStorage.setItem('pixies_age_verified', 'true');\
-            document.getElementById('age-gate-overlay').style.display = 'none';\
-        };\
-        window.ageGateDeny = function() {\
-            window.location.href = 'https://www.google.com';\
-        };\
-\
-        // Setup initial UI\
-        updateCart();\
-        \
-        // Handle overlay clicks (close modals if clicked outside)\
-        modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalClose.onclick(); };\
-        cartOverlay.onclick = (e) => { if(e.target === cartOverlay) cartClose.onclick(); };\
-        checkoutOverlay.onclick = (e) => { if(e.target === checkoutOverlay) checkoutClose.onclick(); };\
-    });\
+            }
+        };
+        
+        
+        // -- AGE GATE --
+        (function() {
+            const overlay = document.getElementById('age-gate-overlay');
+            if (!overlay) return;
+            if (localStorage.getItem('pixies_age_verified') === 'true') {
+                overlay.style.display = 'none';
+            }
+        })();
+        window.ageGateEnter = function() {
+            localStorage.setItem('pixies_age_verified', 'true');
+            document.getElementById('age-gate-overlay').style.display = 'none';
+        };
+        window.ageGateDeny = function() {
+            window.location.href = 'https://www.google.com';
+        };
+
+        // Setup initial UI
+        updateCart();
+        
+        // Handle overlay clicks (close modals if clicked outside)
+        modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalClose.onclick(); };
+        cartOverlay.onclick = (e) => { if(e.target === cartOverlay) cartClose.onclick(); };
+        checkoutOverlay.onclick = (e) => { if(e.target === checkoutOverlay) checkoutClose.onclick(); };
+    });
     
