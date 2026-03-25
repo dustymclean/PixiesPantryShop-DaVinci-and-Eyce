@@ -1,5 +1,4 @@
-
-    document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
         // Init Cart Array from LocalStorage
         let cart = JSON.parse(localStorage.getItem('pixies_cart')) || [];
         
@@ -22,7 +21,12 @@
         const swatchesContainer = document.getElementById('swatches');
         const vLabel = document.getElementById('v-label');
         const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const productGrid = document.getElementById('product-grid'); // Get the product grid container
         
+        // Sort elements
+        const sortBySelect = document.getElementById('sort-by');
+        let allProducts = Object.values(window.productsData); // Convert object to array for sorting
+
         // Cart elements
         const cartFloat = document.getElementById('cart-float');
         const cartBadge = document.getElementById('cart-badge');
@@ -37,6 +41,55 @@
         const cSubmit = document.getElementById('c_submit');
         
         let currentCheckoutItem = null;
+
+        // -- 0. PRODUCT RENDERING AND SORTING LOGIC --
+        function renderProductGrid(productsToRender) {
+            productGrid.innerHTML = ''; // Clear existing products
+            if (productsToRender.length === 0) {
+                productGrid.innerHTML = '<p>No products found in this category.</p>';
+                return;
+            }
+
+            productsToRender.forEach(p => {
+                const img = p.featured_image || (p.all_images ? p.all_images[0] : '');
+                const price = p.min_price || 0;
+                const handle = p.handle;
+                const cardHtml = `
+                    <div class="card" onclick="openModal('${handle}')">
+                        <img src="${img}" alt="${p.title}" class="card-img" loading="lazy">
+                        <div class="card-body">
+                            <div class="card-brand">${p.brand}</div>
+                            <h3 class="card-title">${p.title}</h3>
+                            <div class="card-price">$${price.toFixed(2)}</div>
+                            <span class="btn btn-outline" style="width:100%;box-sizing:border-box;">View Details</span>
+                        </div>
+                    </div>
+                `;
+                productGrid.innerHTML += cardHtml;
+            });
+        }
+
+        sortBySelect.addEventListener('change', (event) => {
+            const sortBy = event.target.value;
+            let sortedProducts = [...allProducts]; // Create a shallow copy to sort
+
+            switch (sortBy) {
+                case 'brand-asc':
+                    sortedProducts.sort((a, b) => a.brand.localeCompare(b.brand));
+                    break;
+                case 'category-asc':
+                    sortedProducts.sort((a, b) => (a.product_type || '').localeCompare(b.product_type || ''));
+                    break;
+                case 'price-asc':
+                    sortedProducts.sort((a, b) => a.min_price - b.min_price);
+                    break;
+                case 'default':
+                default:
+                    // Keep original order (or the order from allProducts)
+                    break;
+            }
+            renderProductGrid(sortedProducts);
+        });
         
         // -- 1. CART LOGIC --
         
@@ -225,8 +278,8 @@
             const address = `${document.getElementById('c_address').value}, ${document.getElementById('c_city').value}, ${document.getElementById('c_state').value} ${document.getElementById('c_zip').value}`;
             
             // Build Items string for Discord (truncate if extremely long)
-            let itemsString = cart.map(i => `${i.qty}x ${i.title} (${i.variant}) - $${(i.price * i.qty).toFixed(2)}`).join('\n');
-            if(itemsString.length > 900) { itemsString = itemsString.substring(0, 900) + '\n...and more'; }
+            let itemsString = cart.map(i => `${i.qty}x ${i.title} (${i.variant}) - $${(i.price * i.qty).toFixed(2)}`).join('\\n');
+            if(itemsString.length > 900) { itemsString = itemsString.substring(0, 900) + '\\n...and more'; }
             
             const grandTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2);
             
@@ -278,32 +331,32 @@
                 checkoutFeedback.textContent = "Error submitting order. Please try again or contact support.";
                 cSubmit.disabled = false;
                 cSubmit.textContent = "Submit Order";
-            }
-        };
-        
-        
-        // -- AGE GATE --
-        (function() {
-            const overlay = document.getElementById('age-gate-overlay');
-            if (!overlay) return;
-            if (localStorage.getItem('pixies_age_verified') === 'true') {
-                overlay.style.display = 'none';
-            }
-        })();
-        window.ageGateEnter = function() {
-            localStorage.setItem('pixies_age_verified', 'true');
-            document.getElementById('age-gate-overlay').style.display = 'none';
-        };
-        window.ageGateDeny = function() {
-            window.location.href = 'https://www.google.com';
-        };
-
-        // Setup initial UI
-        updateCart();
-        
-        // Handle overlay clicks (close modals if clicked outside)
-        modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalClose.onclick(); };
-        cartOverlay.onclick = (e) => { if(e.target === cartOverlay) cartClose.onclick(); };
-        checkoutOverlay.onclick = (e) => { if(e.target === checkoutOverlay) checkoutClose.onclick(); };
-    });
+            }\
+        };\
+        \
+        \
+        // -- AGE GATE --\
+        (function() {\
+            const overlay = document.getElementById('age-gate-overlay');\
+            if (!overlay) return;\
+            if (localStorage.getItem('pixies_age_verified') === 'true') {\
+                overlay.style.display = 'none';\
+            }\
+        })();\
+        window.ageGateEnter = function() {\
+            localStorage.setItem('pixies_age_verified', 'true');\
+            document.getElementById('age-gate-overlay').style.display = 'none';\
+        };\
+        window.ageGateDeny = function() {\
+            window.location.href = 'https://www.google.com';\
+        };\
+\
+        // Setup initial UI\
+        updateCart();\
+        \
+        // Handle overlay clicks (close modals if clicked outside)\
+        modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalClose.onclick(); };\
+        cartOverlay.onclick = (e) => { if(e.target === cartOverlay) cartClose.onclick(); };\
+        checkoutOverlay.onclick = (e) => { if(e.target === checkoutOverlay) checkoutClose.onclick(); };\
+    });\
     
