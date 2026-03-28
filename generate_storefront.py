@@ -113,8 +113,8 @@ def ensure_dirs():
 
 def generate_site():
     ensure_dirs()
-    shutil.copy(os.path.join(os.path.dirname(__file__), "css", "style.css"), os.path.join(OUTPUT_DIR, "css", "style.css"))
-    shutil.copy(os.path.join(os.path.dirname(__file__), "js", "main.js"), os.path.join(OUTPUT_DIR, "js", "main.js"))
+    pass
+    pass
     if not os.path.exists(JSON_PATH):
         print(f"File not found: {JSON_PATH}")
         return
