@@ -438,15 +438,6 @@ def generate_site():
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-
-      gtag('config', 'G-WK29KFSG7K');
-    </script>
     <meta charset="UTF-8">
     <title>{title} | Pixie's Pantry</title>
     <!-- Google Shopping / Merchant Center SEO -->
@@ -543,15 +534,6 @@ def generate_site():
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-
-      gtag('config', 'G-WK29KFSG7K');
-    </script>
     <meta charset="UTF-8">
     <title>Community Power & Pricing | Pixie's Pantry</title>
     <link rel="stylesheet" href="css/style.css">
@@ -647,15 +629,6 @@ def generate_site():
     auth_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-
-      gtag('config', 'G-WK29KFSG7K');
-    </script>
     <meta charset="UTF-8">
     <title>Account | Pixie's Pantry</title>
     <link rel="stylesheet" href="css/style.css">
