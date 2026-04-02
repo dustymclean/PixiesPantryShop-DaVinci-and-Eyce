@@ -193,7 +193,7 @@ import urllib.request
 import hashlib
 
 CSV_PATH = os.path.expanduser("~/Desktop/Dyspensr_Master_Catalog_Priced.csv")
-OUTPUT_DIR = os.path.expanduser("~/Desktop/Pixies_Vape_Shop")
+OUTPUT_DIR = os.path.expanduser("~/Desktop/Synergy_Shop")
 
 def slugify(text):
     text = str(text).lower().strip()
