@@ -1,9 +1,101 @@
 import json
+import csv
 import os
 import re
-import shutil
 
 import json
+
+def apply_lexicon(text):
+    if not text: return ""
+    text = str(text)
+    
+    protected_urls = ["vapes.pixiespantryshop.com", "vapes.pixiespantryshop.com", "pixiespantryshop.com", "dyspensr.com"]
+    for i, p in enumerate(protected_urls):
+        text = text.replace(p, f"__PROTECTED_URL_{i}__")
+        
+    lexicon = {
+        r'\bbongs\b': 'Hydro-Filtration Devices',
+        r'\bbong\b': 'Hydro-Filtration Device',
+        r'\bwater pipes\b': 'Hydro-Vessels',
+        r'\bwater pipe\b': 'Hydro-Vessel',
+        r'\bdab rigs\b': 'Concentrate Filtration Systems',
+        r'\bdab rig\b': 'Concentrate Filtration System',
+        r'\brigs\b': 'Desktop Filtration Apparatuses',
+        r'\brig\b': 'Desktop Filtration Apparatus',
+        r'\bbowls\b': 'Material Receptacles',
+        r'\bbowl\b': 'Material Receptacle',
+        r'\bherb slides\b': 'Material Receptacles',
+        r'\bherb slide\b': 'Material Receptacle',
+        r'\bbangers\b': 'Quartz Crucibles',
+        r'\bbanger\b': 'Quartz Crucible',
+        r'\bdabs\b': 'Extracts',
+        r'\bdabbing\b': 'Extracting',
+        r'\bdab\b': 'Extract',
+        r'\bwaxes\b': 'Essential Oils',
+        r'\bwax\b': 'Essential Oil',
+        r'\bweed\b': 'Botanical Blend',
+        r'\bmarijuana\b': 'Botanical Blend',
+        r'\bjoints\b': 'Pre-Rolled Inhalation Units',
+        r'\bjoint\b': 'Pre-Rolled Inhalation Unit',
+        r'\bblunts\b': 'Pre-Rolled Inhalation Units',
+        r'\bblunt\b': 'Pre-Rolled Inhalation Unit',
+        r'\bpre-?rolls\b': 'Pre-Packed Botanicals',
+        r'\bpre-?roll\b': 'Pre-Packed Botanical',
+        r'\bglob mops\b': 'Precision Micro-Sanitization Applicators',
+        r'\bglob mop\b': 'Precision Micro-Sanitization Applicator',
+        r'\bk-?clips\b': 'Joint Retention Clips',
+        r'\bk-?clip\b': 'Joint Retention Clip',
+        r'\bdrop downs\b': 'Thermal Displacement Adapters',
+        r'\bdrop down\b': 'Thermal Displacement Adapter',
+        r'\bash catchers\b': 'Pre-Filtration Modules',
+        r'\bash catcher\b': 'Pre-Filtration Module',
+        r'\bvapes\b': 'Aromatherapy Devices',
+        r'\bvapers\b': 'Aromatherapy Users',
+        r'\bvaping\b': 'Aromatherapy',
+        r'\bvape\b': 'Aromatherapy Device',
+        r'\bvaporizers\b': 'Thermal Extractors',
+        r'\bvaporizer\b': 'Thermal Extractor',
+        r'\bhits\b': 'Draws',
+        r'\bhit\b': 'Draw',
+        r'\bsmokes\b': 'Aromas',
+        r'\bsmoking\b': 'Aromatherapy Session',
+        r'\bsmoker\b': 'Aromatherapy User',
+        r'\bsmoke\b': 'Aroma',
+        r'\bcbd\b': 'Wellness Blend',
+        r'\bthc\b': 'Wellness Blend',
+        r'\be-cig(?:arette)?s\b': 'Electronic Diffusers',
+        r'\be-cig(?:arette)?\b': 'Electronic Diffuser',
+        r'\bglass pipes\b': 'Handheld Glass Pieces',
+        r'\bglass pipe\b': 'Handheld Glass Piece',
+        r'\bpipes\b': 'Handheld Pieces',
+        r'\bpipe\b': 'Handheld Piece',
+        r'\bchillums\b': 'Taster Pieces',
+        r'\bchillum\b': 'Taster Piece',
+        r'\bnectar collectors\b': 'Direct Draw Straws',
+        r'\bnectar collector\b': 'Direct Draw Straw',
+        r'\bshatter\b': 'Extract',
+        r'\brosin\b': 'Extract',
+        r'\bconcentrates\b': 'Essential Extracts',
+        r'\bconcentrate\b': 'Essential Extract'
+    }
+    
+    def match_case(word, replacement):
+        if word.isupper(): return replacement.upper()
+        elif word.istitle():
+            return ' '.join(w.capitalize() for w in replacement.split(' '))
+        elif word.islower(): return replacement.lower()
+        return replacement
+        
+    for pattern, replacement in lexicon.items():
+        text = re.sub(pattern, lambda m: match_case(m.group(0), replacement), text, flags=re.IGNORECASE)
+        
+    for i, p in enumerate(protected_urls):
+        text = text.replace(f"__PROTECTED_URL_{i}__", p)
+        
+    return text
+
+
+
 def sanitize_for_google(text):
     if not text: return ""
     text = str(text)
@@ -96,9 +188,12 @@ def build_sitemap(url_base, pages):
     xml += '</urlset>'
     return xml
 
+import time
+import urllib.request
+import hashlib
 
-JSON_PATH = os.path.expanduser("~/Desktop/Synergy_Scraper/synergy_products.json")
-OUTPUT_DIR = os.path.expanduser("~/Desktop/Synergy_Shop")
+CSV_PATH = os.path.expanduser("~/Desktop/Dyspensr_Master_Catalog_Priced.csv")
+OUTPUT_DIR = os.path.expanduser("~/Desktop/Pixies_Vape_Shop")
 
 def slugify(text):
     text = str(text).lower().strip()
@@ -110,34 +205,218 @@ def ensure_dirs():
     os.makedirs(os.path.join(OUTPUT_DIR, "css"), exist_ok=True)
     os.makedirs(os.path.join(OUTPUT_DIR, "js"), exist_ok=True)
     os.makedirs(os.path.join(OUTPUT_DIR, "categories"), exist_ok=True)
+    os.makedirs(os.path.join(OUTPUT_DIR, "brands"), exist_ok=True)
+
+def fetch_dyspensr_data():
+    grouped_products = {}
+    master_cats = set()
+    master_brands = set()
+
+    print("Loading CSV for configuration...")
+    csv_db = {}
+    if os.path.exists(CSV_PATH):
+        with open(CSV_PATH, "r", encoding="utf-8") as f:
+            reader = list(csv.DictReader(f))
+            for row in reader:
+                sku = row.get("SKU", "").strip()
+                title = row.get("Product Name", "").strip()
+                var = row.get("Variant", "").strip()
+                if not sku or sku.lower() == "none":
+                    sku = "GEN-" + hashlib.md5((title + var).encode()).hexdigest()[:8].upper()
+                
+                status = row.get("Status", "").strip() or "Active"
+                price = row.get("Your Retail Price", "")
+                cat = row.get("Product Type", "Accessories").strip() or "Accessories"
+                brand = row.get("Brand", "Premium").strip() or "Premium"
+                
+                csv_db[sku] = {
+                    "Status": status,
+                    "Price": price,
+                    "Category": cat,
+                    "Brand": brand,
+                    "Specs": row.get("Search Tags", ""),
+                    "Featured": row.get("Featured", "No")
+                }
+
+    print("Fetching live data from Dyspensr...")
+    page = 1
+    has_more = True
+
+    def is_color_variant(name):
+        name_lower = name.lower()
+        color_words = ['black', 'white', 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'silver', 'gold', 'grey', 'gray', 'clear', 'color:', 'glow', 'matte', 'metallic', 'wood', 'rainbow', 'tie dye', 'color']
+        for cw in color_words:
+            if cw in name_lower: return True
+        return False
+
+    while has_more:
+        url = f"https://dyspensr.com/products.json?limit=250&page={page}"
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=15) as response:
+                data = json.loads(response.read().decode())
+            
+            if not data.get("products"):
+                break
+                
+            for p in data["products"]:
+                title = apply_lexicon((p.get("title") or "").strip())
+                body_html = apply_lexicon(p.get("body_html") or "")
+                tags = apply_lexicon(", ".join(p.get("tags", [])))
+                
+                base_images = [img.get("src", "") for img in p.get("images", []) if img.get("src")]
+                primary_image = base_images[0] if base_images else "https://placehold.co/400x400/f5f5f5/999?text=No+Image"
+                
+                for v in p.get("variants", []):
+                    if not v.get("available", False): continue
+                        
+                    v_title = apply_lexicon((v.get("title") or "").strip())
+                    if v_title == "Default Title": v_title = ""
+                    
+                    sku = (v.get("sku") or "").strip()
+                    if not sku:
+                        sku = "GEN-" + hashlib.md5((title + v_title).encode()).hexdigest()[:8].upper()
+                    
+                    csv_item = csv_db.get(sku)
+                    if not csv_item or str(csv_item["Status"]).strip().lower() == "hidden": continue
+                    
+                    price_str = csv_item["Price"]
+                    if not price_str: continue
+                    try:
+                        p_val = float(price_str)
+                        if p_val <= 0: continue
+                    except: continue
+                    
+                    v_img_obj = v.get("featured_image")
+                    v_img = v_img_obj.get("src") if v_img_obj else primary_image
+                    
+                    is_color = is_color_variant(v_title) or not v_title
+                    prod_title = title if is_color else f"{title} - {v_title}"
+                    variant_name = v_title if is_color else "Default Option"
+                    if not variant_name: variant_name = "Default Option"
+
+                    cat = csv_item["Category"]
+                    brand = csv_item["Brand"]
+
+                    if prod_title not in grouped_products:
+                        specs_raw = csv_item["Specs"] or tags
+                        html_desc = ""
+                        if body_html and len(body_html.strip()) > 10:
+                            html_desc = f'<div class="original-desc" style="margin-bottom: 20px;">{body_html}</div>'
+
+                        spec_list = [s.strip() for s in specs_raw.split(',') if s.strip() and "TAG" not in s.upper() and "SALE ELIGIBLE" not in s.upper()]
+                        spec_bullets = "".join([f"<li><strong>{s}</strong></li>" for s in spec_list[:6]]) if spec_list else "<li>Premium construction and strict quality tolerances.</li>"
+                        
+                        cat = apply_lexicon(cat)
+                        prod_title = apply_lexicon(prod_title)
+                        clean_desc = f'''
+                        {html_desc}
+                        <p>The <strong>{prod_title}</strong> is a highly vetted addition to the <em>{cat}</em> lineup. Selected specifically for the Pixie's Pantry Group Buy, this piece was evaluated for material quality, performance consistency, and long-term durability.</p>
+                        <p>We bypass retail markups to bring you hardware that merges high-end lifestyle aesthetics with pure functional engineering. There is no marketing fluff here—just the exact specifications you need to make an informed upgrade to your setup.</p>
+                        <h4 style='margin-top:15px; margin-bottom:5px; color:#d4af37; text-transform:uppercase; letter-spacing:1px; font-size:0.9em;'>Audited Specifications:</h4>
+                        <ul style='margin-top:0; padding-left:20px; font-size:0.9em; color:#555;'>
+                            {spec_bullets}
+                        </ul>
+                        '''
+                        
+                        all_images = list(dict.fromkeys(base_images + ([v_img] if v_img else [])))
+                        if not all_images or all_images[0] == "": all_images = [primary_image]
+
+                        grouped_products[prod_title] = {
+                            "handle": slugify(prod_title),
+                            "brand": brand,
+                            "product_type": cat,
+                            "title": prod_title,
+                            "body_html": clean_desc,
+                            "options": [{"name": "Options", "values": []}],
+                            "in_stock_variants": [],
+                            "all_images": all_images,
+                            "featured_image": v_img if not is_color else primary_image,
+                            "min_price": float('inf')
+                        }
+                    
+                    variant_exists = False
+                    for existing_v in grouped_products[prod_title]["in_stock_variants"]:
+                        if existing_v["option1_value"] == variant_name and existing_v["variant_id"] == sku:
+                            variant_exists = True
+                            break
+                            
+                    if not variant_exists:
+                        grouped_products[prod_title]["in_stock_variants"].append({
+                            "variant_id": sku,
+                            "option1_name": "Options",
+                            "option1_value": variant_name,
+                            "price": p_val,
+                            "variant_image": v_img
+                        })
+                        if variant_name not in grouped_products[prod_title]["options"][0]["values"]:
+                            grouped_products[prod_title]["options"][0]["values"].append(variant_name)
+                        if p_val < grouped_products[prod_title]["min_price"]:
+                            grouped_products[prod_title]["min_price"] = p_val
+
+            page += 1
+            time.sleep(0.1)
+        except Exception as e:
+            print(f"Error fetching page {page}: {e}")
+            break
+            
+    # -- SYNERGY INTEGRATION --
+    synergy_path = "/Users/dusty/Desktop/Synergy_Scraper/synergy_products.json"
+    if os.path.exists(synergy_path):
+        print("Fetching live data from Synergy...")
+        with open(synergy_path, "r", encoding="utf-8") as sf:
+            s_data = json.load(sf)
+            for sp in s_data.get("products", []):
+                min_price = float('inf')
+                for v in sp.get("in_stock_variants", []):
+                    try:
+                        p_val = float(v.get("price", 0))
+                        if p_val < min_price: min_price = p_val
+                    except: pass
+                
+                sp["min_price"] = min_price if min_price != float('inf') else 0.0
+                
+                v_images = []
+                for v in sp.get("in_stock_variants", []):
+                    if v.get("variant_image"): v_images.append(v.get("variant_image"))
+                if v_images:
+                    sp["all_images"] = list(set(v_images))
+                    sp["featured_image"] = sp["all_images"][0]
+                elif "image" in sp and sp["image"]:
+                    sp["all_images"] = [sp["image"]]
+                    sp["featured_image"] = sp["image"]
+                elif "images" in sp and sp["images"]:
+                    sp["all_images"] = sp["images"]
+                    sp["featured_image"] = sp["images"][0]
+                else:
+                    sp["all_images"] = []
+                    sp["featured_image"] = "https://via.placeholder.com/400"
+                
+                grouped_products[sp["title"]] = sp
+
+    return list(grouped_products.values())
 
 def generate_site():
     ensure_dirs()
-    pass
-    pass
-    if not os.path.exists(JSON_PATH):
-        print(f"File not found: {JSON_PATH}")
+    products = fetch_dyspensr_data()
+    
+    if not products:
+        print("No products loaded.")
         return
-        
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    
-    products = data.get("products", [])
-    
+
     # Organize products
-    brands = {"DaVinci": [], "Eyce": []}
+    brands = {}
     categories = {}
     
     for p in products:
         b = p.get("brand")
-        if b in brands:
-            brands[b].append(p)
-            
         ptype = p.get("product_type") or "Accessories"
-        if b not in categories:
-            categories[b] = {}
-        if ptype not in categories[b]:
-            categories[b][ptype] = []
+        
+        if b not in brands: brands[b] = []
+        brands[b].append(p)
+            
+        if b not in categories: categories[b] = {}
+        if ptype not in categories[b]: categories[b][ptype] = []
         categories[b][ptype].append(p)
         
     print(f"Loaded {len(products)} products.")
@@ -182,6 +461,23 @@ def generate_site():
     .btn-danger { background: #ff4444; color: #fff; }
     .btn-danger:hover { background: #cc0000; }
     
+    
+    /* Search & Toolbar */
+    .search-box { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 20px; outline: none; font-family: inherit; }
+    .search-box:focus { border-color: var(--primary); }
+    .toolbar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+    .toolbar-left h1 { margin: 0 0 5px; }
+    .toolbar-left p { margin: 0; color: var(--muted); font-size: 14px; }
+    .toolbar-right { display: flex; gap: 10px; }
+    .filter-select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: #fff; cursor: pointer; outline: none; }
+    .filter-select:focus { border-color: var(--primary); }
+    
+    @media (max-width: 900px) {
+        .toolbar { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .toolbar-right { width: 100%; flex-wrap: wrap; }
+        .filter-select { flex: 1; }
+    }
+
     /* Input box for forms */
     .input-box { margin-bottom: 15px; text-align: left; }
     .input-box label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
@@ -300,26 +596,398 @@ def generate_site():
     with open(os.path.join(OUTPUT_DIR, "css", "style.css"), "w") as f:
         f.write(css_content)
         
+    # JS
+    js_content = """
+    document.addEventListener('DOMContentLoaded', () => {
+        // Init Cart Array from LocalStorage
+        let cart = JSON.parse(localStorage.getItem('pixies_cart')) || [];
+        
+        // Modals
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalClose = document.getElementById('modal-close');
+        
+        const cartOverlay = document.getElementById('cart-overlay');
+        const cartClose = document.getElementById('cart-close');
+        
+        const checkoutOverlay = document.getElementById('checkout-overlay');
+        const checkoutClose = document.getElementById('checkout-close');
+        
+        // Product elements
+        const mBrand = document.getElementById('m-brand');
+        const mTitle = document.getElementById('m-title');
+        const mPrice = document.getElementById('m-price');
+        const mDesc = document.getElementById('m-desc');
+        const mImg = document.getElementById('m-img');
+        const swatchesContainer = document.getElementById('swatches');
+        const vLabel = document.getElementById('v-label');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        
+        // Cart elements
+        const cartFloat = document.getElementById('cart-float');
+        const cartBadge = document.getElementById('cart-badge');
+        const cartItemsContainer = document.getElementById('cart-items-container');
+        const cartTotalEl = document.getElementById('cart-total');
+        const proceedToCheckoutBtn = document.getElementById('proceed-checkout-btn');
+        
+        // Checkout elements
+        const checkoutForm = document.getElementById('checkout-form');
+        const checkoutItemDesc = document.getElementById('checkout-item-desc');
+        const checkoutFeedback = document.getElementById('checkout-feedback');
+        const cSubmit = document.getElementById('c_submit');
+        
+        let currentCheckoutItem = null;
+        
+        // -- 1. CART LOGIC --
+        
+        function updateCart() {
+            localStorage.setItem('pixies_cart', JSON.stringify(cart));
+            cartItemsContainer.innerHTML = '';
+            
+            let totalQty = 0;
+            let totalPrice = 0;
+            
+            if(cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p style="text-align:center; color:#888; margin: 40px 0;">Your cart is completely empty. Add some gear!</p>';
+                proceedToCheckoutBtn.style.display = 'none';
+                cartBadge.style.display = 'none';
+                cartTotalEl.textContent = '$0.00';
+                return;
+            }
+            
+            proceedToCheckoutBtn.style.display = 'block';
+            
+            cart.forEach((item, index) => {
+                totalQty += item.qty;
+                totalPrice += item.price * item.qty;
+                
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cart-item';
+                itemEl.innerHTML = `
+                    <img src="${item.image}" class="cart-item-img" alt="${item.title}">
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">${item.title}</div>
+                        <div class="cart-item-variant">${item.variant}</div>
+                        <div class="cart-item-price">$${parseFloat(item.price).toFixed(2)}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                        <span>${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                        <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+                    </div>
+                `;
+                cartItemsContainer.appendChild(itemEl);
+            });
+            
+            cartBadge.textContent = totalQty;
+            cartBadge.style.display = 'flex';
+            cartTotalEl.textContent = '$' + totalPrice.toFixed(2);
+        }
+        
+        window.changeQty = (index, delta) => {
+            cart[index].qty += delta;
+            if(cart[index].qty <= 0) cart.splice(index, 1);
+            updateCart();
+        };
+        
+        window.removeFromCart = (index) => {
+            cart.splice(index, 1);
+            updateCart();
+        };
+        
+        // Open Cart UI
+        cartFloat.onclick = () => {
+            updateCart();
+            cartOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+        
+        cartClose.onclick = () => {
+            cartOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+        
+        // -- 2. PRODUCT MODAL LOGIC --
+        
+        window.openModal = function(handle) {
+            const p = window.productsData[handle];
+            if(!p) return;
+            
+            mBrand.textContent = p.brand;
+            mTitle.textContent = p.title;
+            mPrice.textContent = '$' + p.min_price.toFixed(2);
+            mDesc.innerHTML = p.body_html || 'No description available.';
+            
+            const firstVariant = p.in_stock_variants[0];
+            mImg.src = firstVariant.variant_image || p.featured_image;
+            
+            currentCheckoutItem = {
+                title: p.title,
+                brand: p.brand,
+                variant: firstVariant.option1_value || 'Default',
+                price: parseFloat(firstVariant.price)
+            };
+            
+            // Build swatches
+            swatchesContainer.innerHTML = '';
+            vLabel.textContent = p.options[0] ? p.options[0].name : 'Options';
+            
+            if(p.in_stock_variants.length > 0) {
+                p.in_stock_variants.forEach((v, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'swatch' + (idx === 0 ? ' selected' : '');
+                    btn.textContent = v.option1_value || 'Default';
+                    btn.onclick = () => {
+                        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        if(v.variant_image) mImg.src = v.variant_image;
+                        const vPrice = parseFloat(v.price);
+                        mPrice.textContent = '$' + vPrice.toFixed(2);
+                        currentCheckoutItem.variant = v.option1_value || 'Default';
+                        currentCheckoutItem.price = vPrice;
+                    };
+                    swatchesContainer.appendChild(btn);
+                });
+                addToCartBtn.style.display = 'block';
+            } else {
+                swatchesContainer.innerHTML = '<span class="muted">Out of stock</span>';
+                addToCartBtn.style.display = 'none';
+            }
+            
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+        
+        modalClose.onclick = () => {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+        
+        addToCartBtn.onclick = () => {
+            if(!currentCheckoutItem) return;
+            
+            const existingIndex = cart.findIndex(i => i.title === currentCheckoutItem.title && i.variant === currentCheckoutItem.variant);
+            if(existingIndex > -1) {
+                cart[existingIndex].qty += 1;
+            } else {
+                cart.push({
+                    title: currentCheckoutItem.title,
+                    brand: currentCheckoutItem.brand,
+                    variant: currentCheckoutItem.variant,
+                    price: currentCheckoutItem.price,
+                    image: mImg.src,
+                    qty: 1
+                });
+            }
+            
+            updateCart();
+            modalOverlay.classList.remove('active');
+            cartOverlay.classList.add('active'); // Pop open cart UI immediately
+        };
+        
+        // -- 3. CHECKOUT LOGIC --
+        
+        proceedToCheckoutBtn.onclick = () => {
+            if(cart.length === 0) return;
+            cartOverlay.classList.remove('active');
+            
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalValue = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            checkoutItemDesc.innerHTML = `<strong>Cart Summary:</strong> ${totalItems} items | <strong>Total: $${totalValue.toFixed(2)}</strong>`;
+            
+            checkoutOverlay.classList.add('active');
+        };
+        
+        checkoutClose.onclick = () => {
+            checkoutOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+        
+        checkoutForm.onsubmit = async (e) => {
+            e.preventDefault();
+            cSubmit.disabled = true;
+            cSubmit.textContent = "Processing...";
+            checkoutFeedback.style.display = "block";
+            checkoutFeedback.style.color = "#333";
+            checkoutFeedback.textContent = "Securing order...";
+            
+            // Generate unique Order ID PX-[YYMMDD]-[RANDOM4]
+            const dateStr = new Date().toISOString().slice(2,10).replace(/-/g,'');
+            const rand4 = Math.floor(1000 + Math.random() * 9000);
+            const orderId = `PX-${dateStr}-${rand4}`;
+            
+            const name = document.getElementById('c_name').value;
+            const email = document.getElementById('c_email').value;
+            const phone = document.getElementById('c_phone').value;
+            const discordUser = document.getElementById('c_discord').value || "Not provided";
+            const address = `${document.getElementById('c_address').value}, ${document.getElementById('c_city').value}, ${document.getElementById('c_state').value} ${document.getElementById('c_zip').value}`;
+            
+            // Build Items string for Discord (truncate if extremely long)
+            let itemsString = cart.map(i => `${i.qty}x ${i.title} (${i.variant}) - $${(i.price * i.qty).toFixed(2)}`).join('\\n');
+            if(itemsString.length > 900) { itemsString = itemsString.substring(0, 900) + '\\n...and more'; }
+            
+            const grandTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2);
+            
+            const payload = {
+                username: "Pixie's Pantry Vapes Checkout",
+                embeds: [{
+                    title: `🛍️ New Order: ${orderId}`,
+                    color: 13938487, // Gold-ish
+                    fields: [
+                        { name: "Items Ordered", value: itemsString, inline: false },
+                        { name: "Order Total", value: `$${grandTotal}`, inline: false },
+                        { name: "Customer Name", value: name, inline: true },
+                        { name: "Phone Number", value: phone, inline: true },
+                        { name: "Discord", value: discordUser, inline: true },
+                        { name: "Email", value: email, inline: false },
+                        { name: "Shipping Address", value: address, inline: false }
+                    ],
+                    footer: { text: "Pixie's Pantry Automated Multi-Item Checkout" },
+                    timestamp: new Date().toISOString()
+                }]
+            };
+            
+            try {
+                // New Pixies Pantry Vapes Discord Webhook
+                const res = await fetch("https://discord.com/api/webhooks/1485768342143766659/Ps4fmt1nHirK99gUhos00-fyZKJ8zE8Q8B6BwkOwPYurSzIIxKwune_IBkPWEIRA3W6x", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok || res.status === 204) {
+                    checkoutFeedback.style.color = "green";
+                    checkoutFeedback.innerHTML = `Success! Order ID: <strong>${orderId}</strong>.<br><br>🚨 <strong>COMPLETE PAYMENT TO FINALIZE</strong> 🚨<br>Orders are not processed until payment clears. Check your email/Discord for the secure payment link immediately.`;
+                    checkoutForm.reset();
+                    cart = []; // Empty cart on success
+                    updateCart();
+                    
+                    setTimeout(() => {
+                        checkoutOverlay.classList.remove('active');
+                        cSubmit.disabled = false;
+                        cSubmit.textContent = "Submit Order";
+                        checkoutFeedback.style.display = "none";
+                        document.body.style.overflow = '';
+                    }, 8000);
+                } else {
+                    throw new Error("Webhook failed");
+                }
+            } catch(err) {
+                checkoutFeedback.style.color = "red";
+                checkoutFeedback.textContent = "Error submitting order. Please try again or contact support.";
+                cSubmit.disabled = false;
+                cSubmit.textContent = "Submit Order";
+            }
+        };
+        
+        // 
+        // -- 4. SEARCH & FILTER LOGIC --
+        window.applyFilters = function() {
+            const searchInput = document.getElementById('searchInput');
+            const search = (searchInput ? searchInput.value : '').toLowerCase();
+            const brandFilter = document.getElementById('brandFilter') ? document.getElementById('brandFilter').value : 'all';
+            const catFilter = document.getElementById('catFilter') ? document.getElementById('catFilter').value : 'all';
+            
+            let visibleCount = 0;
+            document.querySelectorAll('.card').forEach(card => {
+                const name = card.dataset.name || '';
+                const brand = card.dataset.brand || '';
+                const cat = card.dataset.cat || '';
+                
+                const matchSearch = name.includes(search) || brand.includes(search);
+                const matchBrand = (brandFilter === 'all') || (brand === brandFilter);
+                const matchCat = (catFilter === 'all') || (cat === catFilter);
+                
+                if (matchSearch && matchBrand && matchCat) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            const countEl = document.getElementById('result-count');
+            if (countEl) countEl.textContent = visibleCount + ' products';
+        };
+        
+        window.sortGrid = function() {
+            const val = document.getElementById('sortSelect')?.value;
+            const grid = document.querySelector('.grid');
+            if (!grid || !val || val === 'default') return;
+            
+            const cards = Array.from(grid.querySelectorAll('.card'));
+            cards.sort((a, b) => {
+                if (val === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                if (val === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                if (val === 'name-az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+                return 0;
+            });
+            cards.forEach(c => grid.appendChild(c));
+        };
 
+        
+        // -- AGE GATE --
+        (function() {
+            const overlay = document.getElementById('age-gate-overlay');
+            if (!overlay) return;
+            if (localStorage.getItem('pixies_age_verified') === 'true') {
+                overlay.style.display = 'none';
+            }
+        })();
+        window.ageGateEnter = function() {
+            localStorage.setItem('pixies_age_verified', 'true');
+            document.getElementById('age-gate-overlay').style.display = 'none';
+        };
+        window.ageGateDeny = function() {
+            window.location.href = 'https://www.google.com';
+        };
+
+        // Setup initial UI
+        updateCart();
+        
+        // Handle overlay clicks (close modals if clicked outside)
+        modalOverlay.onclick = (e) => { if(e.target === modalOverlay) modalClose.onclick(); };
+        cartOverlay.onclick = (e) => { if(e.target === cartOverlay) cartClose.onclick(); };
+        checkoutOverlay.onclick = (e) => { if(e.target === checkoutOverlay) checkoutClose.onclick(); };
+    });
+    """
+    with open(os.path.join(OUTPUT_DIR, "js", "main.js"), "w") as f:
+        f.write(js_content)
 
     def get_sidebar_html(depth=""):
         html = f"""
         <aside class="sidebar">
-            <a href="{depth}index.html" class="sidebar-logo">Pixie's Pantry</a>
-            <div class="sidebar-tagline">DaVinci & Eyce</div>
+            <a href="https://pixiespantryshop.com" class="sidebar-logo">Pixie's Pantry</a>
+            <div class="sidebar-tagline">VAPE & SMOKE ACCESSORIES</div>
             
+            <a href="https://pixiespantryshop.com" class="sidebar-link" style="color: var(--gold); font-weight: 700;">🏠 Pantry Home</a>
+            
+            <input type="text" id="searchInput" class="search-box" placeholder="Search catalog..." onkeyup="applyFilters()">
+            
+            <div class="sidebar-section">Browse</div>
             <a href="{depth}index.html" class="sidebar-link">All Products</a>
+            
+            <div class="sidebar-section">Store Info</div>
+            <a href="{depth}sanctuary.html" class="sidebar-link">About / Our Philosophy</a>
+            <a href="{depth}support.html" class="sidebar-link">FAQ & Guide</a>
+            <a href="{depth}logistics.html" class="sidebar-link">Shipping & Delivery</a>
+            <a href="{depth}warranty.html" class="sidebar-link">Returns & Exchanges</a>
+            <a href="{depth}audit.html" class="sidebar-link">Privacy & Terms</a>
+
+            <div class="sidebar-section">Shop By Category</div>
         """
-        
-        for brand in ["DaVinci", "Eyce"]:
-            html += f"""
-            <div class="sidebar-section">{brand}</div>
-            <a href="{depth}{brand.lower()}.html" class="sidebar-link">Shop All {brand}</a>
-            """
-            for cat in sorted(categories.get(brand, {}).keys()):
+        for b, cats in categories.items():
+            for cat in sorted(cats.keys()):
                 if not cat: continue
-                html += f'<a href="{depth}categories/{slugify(brand)}-{slugify(cat)}.html" class="sidebar-link child">{cat}</a>'
-                
+                if len(cats[cat]) > 0:
+                    html += f'<a href="{depth}categories/{slugify(cat)}.html" class="sidebar-link">{cat}</a>'
+        
+        html += '<div class="sidebar-section">Shop By Brand</div>'
+        for brand in sorted(brands.keys()):
+            if not brand or brand == "Premium": continue
+            html += f'<a href="{depth}brands/{slugify(brand)}.html" class="sidebar-link">{brand}</a>'
+
         html += f"""
             <div class="sidebar-community">
                 <h4>Power in Numbers</h4>
@@ -328,9 +996,10 @@ def generate_site():
                 <a href="https://discord.gg/dm8deA2u" target="_blank" class="btn" style="background: var(--gold); color: #000; padding: 8px; font-size: 11px; width: 100%; box-sizing: border-box;">Join the Mission</a>
             </div>
 
-            <div class="sidebar-footer">
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 8px;">
                 <a href="{depth}login.html" class="sidebar-link">Log In</a>
                 <a href="{depth}signup.html" class="sidebar-link">Sign Up</a>
+                <a href="#" class="sidebar-link" style="font-size: 12px; color: #666;">Forgot Password</a>
             </div>
         </aside>
         """
@@ -384,6 +1053,10 @@ def generate_site():
         <div class="modal-overlay" id="checkout-overlay">
             <div class="modal" style="max-width: 500px; flex-direction: column; padding: 40px;">
                 <button class="modal-close" id="checkout-close">&times;</button>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 class="modal-title" style="margin-bottom: 5px; color: #cc0000; font-size: 20px;">🚨 COMPLETE PAYMENT TO FINALIZE 🚨</h2>
+                    <p style="font-size: 13px; font-weight: bold; color: #555;">Orders are not processed until payment clears.</p>
+                </div>
                 <h2 class="modal-title" style="margin-bottom: 5px;">Secure Checkout</h2>
                 <div id="checkout-item-desc" style="margin-bottom: 25px; color: #444;"></div>
                 <form id="checkout-form">
@@ -413,31 +1086,78 @@ def generate_site():
         sidebar = get_sidebar_html(depth)
         modal = get_modal_html()
         
-        # Inject data for JS
         products_dict = {p["handle"]: p for p in product_list}
         json_data = json.dumps(products_dict)
         
-        grid_html = '<div class="grid" id="product-grid"></div>'
+        # Build Filter Dropdowns dynamically
+        unique_brands = sorted(list(set(p['brand'] for p in product_list if p.get('brand'))))
+        unique_cats = sorted(list(set(p['product_type'] for p in product_list if p.get('product_type'))))
+        
+        brand_opts = "".join([f'<option value="{b}">{b}</option>' for b in unique_brands])
+        cat_opts = "".join([f'<option value="{c}">{c}</option>' for c in unique_cats])
+        
+        toolbar = f"""
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <h1 class="page-title" style="margin:0;">{title}</h1>
+                <p id="result-count">{len(product_list)} products</p>
+            </div>
+            <div class="toolbar-right">
+                <select id="brandFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="all">All Brands</option>{brand_opts}
+                </select>
+                <select id="catFilter" class="filter-select" onchange="applyFilters()">
+                    <option value="all">All Categories</option>{cat_opts}
+                </select>
+                <select id="sortSelect" class="filter-select" onchange="sortGrid()">
+                    <option value="default">Sort</option>
+                    <option value="price-low">Price: Low → High</option>
+                    <option value="price-high">Price: High → Low</option>
+                    <option value="name-az">Name A–Z</option>
+                </select>
+            </div>
+        </div>
+        """
+        
+        grid_html = '<div class="grid">'
+        for p in product_list:
+            img = p.get("featured_image") or (p.get("all_images")[0] if p.get("all_images") else "")
+            price = p.get("min_price", 0)
+            handle = p["handle"]
+            safe_name = p['title'].lower().replace('"', '&quot;')
+            grid_html += f"""
+            <div class="card" onclick="openModal('{handle}')" data-name="{safe_name}" data-brand="{p['brand']}" data-cat="{p['product_type']}" data-price="{price}">
+                <img src="{img}" alt="{p['title']}" class="card-img" loading="lazy">
+                <div class="card-body">
+                    <div class="card-brand">{p['brand']}</div>
+                    <h3 class="card-title">{p['title']}</h3>
+                    <div class="card-price">${price:.2f}</div>
+                    <span class="btn btn-outline" style="width:100%;box-sizing:border-box;">View Details</span>
+                </div>
+            </div>
+            """
+        grid_html += '</div>'
         if not product_list:
             grid_html = '<p>No products found in this category.</p>'
             
         
         # Build JSON-LD
-        json_ld_content_for_file = ""
+        json_ld_scripts = ""
         for p in product_list:
-            json_ld_content_for_file += build_json_ld(p, "https://synergyimports.pixiespantryshop.com")
-        
-        # Write JSON-LD to a separate file
-        if json_ld_content_for_file:
-            with open(os.path.join(OUTPUT_DIR, "js", "index_ld_json.js"), "w", encoding="utf-8") as f:
-                f.write(json_ld_content_for_file)
-            json_ld_scripts_tag = f'<script src="{depth}js/index_ld_json.js"></script>'
-        else:
-            json_ld_scripts_tag = ''
-
+            json_ld_scripts += build_json_ld(p, "https://vapes.pixiespantryshop.com")
+            
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WK29KFSG7K');
+    </script>
     <meta charset="UTF-8">
     <title>{title} | Pixie's Pantry</title>
     <!-- Google Shopping / Merchant Center SEO -->
@@ -445,8 +1165,8 @@ def generate_site():
     <meta property="og:title" content="{sanitize_for_google(title)} | Pixie's Pantry">
     <meta property="og:description" content="{sanitize_for_google(subtitle)}">
     <meta property="og:type" content="website">
-    <link rel="canonical" href="https://synergyimports.pixiespantryshop.com/{filename}">
-    {json_ld_scripts_tag}
+    <link rel="canonical" href="https://vapes.pixiespantryshop.com/{filename}">
+    {json_ld_scripts}
     <link rel="stylesheet" href="{depth}css/style.css">
 </head>
 <body>
@@ -454,25 +1174,7 @@ def generate_site():
     {sidebar}
     <div class="main-wrapper">
         <main class="main-content">
-            <h1 class="page-title">{title}</h1>
-            <div class="page-subtitle">{subtitle}</div>
-            <div class="sort-filter-controls" style="margin-bottom: 25px; text-align: right;">
-                
-                <select id="filter-brand" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
-                    <option value="all">All Brands</option>
-                    <option value="Eyce">Eyce</option>
-                    <option value="DaVinci">DaVinci</option>
-                </select>
-                <select id="filter-category" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
-                    <option value="all">All Categories</option>
-                </select>
-                <select id="sort-by" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-right: 10px; font-size: 14px;">
-                    <option value="default">Sort By</option>
-                    <option value="brand-asc">Brand (A-Z)</option>
-                    <option value="category-asc">Category (A-Z)</option>
-                    <option value="price-asc">Price (Low to High)</option>
-                </select>
-            </div>
+            {toolbar}
             {grid_html}
         </main>
         
@@ -481,6 +1183,9 @@ def generate_site():
                 <div class="footer-col">
                     <h3>Pixie's Pantry</h3>
                     <p style="max-width: 300px;">Curating the absolute highest tier of vaporization and glass hardware. Direct wholesale access, vetted specifically for the community. Elevate your ritual.</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://pixiespantryshop.com" style="color: var(--gold); font-weight: 700; text-decoration: none;">🏠 Pantry Home</a>
+                    </div>
                 </div>
                 <div class="footer-col">
                     <h3>Explore</h3>
@@ -526,6 +1231,7 @@ def generate_site():
     <script src="{depth}js/main.js"></script>
 </body>
 </html>"""
+        os.makedirs(os.path.dirname(os.path.join(OUTPUT_DIR, filename)), exist_ok=True)
         with open(os.path.join(OUTPUT_DIR, filename), "w", encoding="utf-8") as f:
             f.write(html)
             
@@ -534,6 +1240,15 @@ def generate_site():
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WK29KFSG7K');
+    </script>
     <meta charset="UTF-8">
     <title>Community Power & Pricing | Pixie's Pantry</title>
     <link rel="stylesheet" href="css/style.css">
@@ -555,7 +1270,7 @@ def generate_site():
                     <li style="margin-bottom: 10px;"><strong>We Negotiate:</strong> We show distributors our engagement metrics.</li>
                     <li style="margin-bottom: 10px;"><strong>You Save:</strong> The discounts we secure are passed directly to you on the storefront.</li>
                 </ul>
-                <p>By simply joining the Discord, you are actively helping lower the cost of premium DaVinci and Eyce hardware for yourself and everyone else.</p>
+                <p>By simply joining the Discord, you are actively helping lower the cost of premium hardware for yourself and everyone else.</p>
                 <div style="margin-top: 40px; padding: 30px; background: #fafafa; border: 1px solid var(--border); border-radius: 12px; text-align: center;">
                     <h2 style="margin-top: 0;">Ready to lower prices?</h2>
                     <a href="https://discord.gg/dm8deA2u" target="_blank" class="btn" style="background: var(--gold); color: #000; font-size: 16px; padding: 15px 30px; margin-top: 15px;">Join the Mission on Discord</a>
@@ -568,6 +1283,9 @@ def generate_site():
                 <div class="footer-col">
                     <h3>Pixie's Pantry</h3>
                     <p style="max-width: 300px;">Curating the absolute highest tier of vaporization and glass hardware. Direct wholesale access, vetted specifically for the community. Elevate your ritual.</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://pixiespantryshop.com" style="color: var(--gold); font-weight: 700; text-decoration: none;">🏠 Pantry Home</a>
+                    </div>
                 </div>
                 <div class="footer-col">
                     <h3>Explore</h3>
@@ -615,20 +1333,35 @@ def generate_site():
 
     # Write pages
     print("Generating pages...")
-    render_page("index.html", "Shop All", "Discover premium devices from DaVinci and Eyce.", products)
-    render_page("davinci.html", "DaVinci", "Advanced vaporizers and accessories.", brands.get("DaVinci", []))
-    render_page("eyce.html", "Eyce", "Silicone pipes and rigs.", brands.get("Eyce", []))
+    render_page("index.html", "Shop All", "Premium vaping hardware and accessories.", products)
     
+    for brand, prods in brands.items():
+        if not brand or brand == "Premium": continue
+        render_page(f"brands/{slugify(brand)}.html", brand, f"Shop all {brand} products.", prods, depth="../")
+        
+    for cat, prods in categories.get("Premium", {}).items():
+        if not cat: continue
+        render_page(f"categories/{slugify(cat)}.html", cat, f"Shop all {cat}.", prods, depth="../")
+
     for brand, cats in categories.items():
+        if brand == "Premium": continue
         for cat, prods in cats.items():
             if not cat: continue
-            render_page(f"categories/{slugify(brand)}-{slugify(cat)}.html", 
-                        f"{brand} {cat}", f"Shop all {brand} {cat}.", prods, depth="../")
+            render_page(f"categories/{slugify(cat)}.html", cat, f"Shop all {cat}.", prods, depth="../")
                         
     # Login / Signup stubs
     auth_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WK29KFSG7K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+
+      gtag('config', 'G-WK29KFSG7K');
+    </script>
     <meta charset="UTF-8">
     <title>Account | Pixie's Pantry</title>
     <link rel="stylesheet" href="css/style.css">
@@ -719,10 +1452,10 @@ def generate_site():
             if f.endswith(".html"): sitemap_pages.append(f"categories/{f}")
         
     with open(os.path.join(OUTPUT_DIR, "sitemap.xml"), "w", encoding="utf-8") as f:
-        f.write(build_sitemap("https://synergyimports.pixiespantryshop.com", sitemap_pages))
+        f.write(build_sitemap("https://vapes.pixiespantryshop.com", sitemap_pages))
         
     with open(os.path.join(OUTPUT_DIR, "robots.txt"), "w", encoding="utf-8") as f:
-        f.write(f"User-agent: *\nAllow: /\nSitemap: https://synergyimports.pixiespantryshop.com/sitemap.xml")
+        f.write(f"User-agent: *\nAllow: /\nSitemap: https://vapes.pixiespantryshop.com/sitemap.xml")
         
     print("Storefront generated successfully with SEO/Sitemap!")
 
