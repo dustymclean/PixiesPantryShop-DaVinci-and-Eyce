@@ -1197,13 +1197,13 @@ def generate_site():
                     </ul>
                 </div>
                 <div class="footer-col">
-                    <h3>Client Services</h3>
+                    <h3>Store Info</h3>
                     <ul>
-                        <li><a href="https://discord.gg/dm8deA2u" target="_blank">Discord Support (Fastest)</a></li>
-                        <li><a href="mailto:admin@pixies-pantry.com">Email Concierge</a></li>
-                        <li><a href="{depth}shipping.html">Shipping & Delivery</a></li>
-                        <li><a href="{depth}refunds.html">Returns & Exchanges</a></li>
-                        <li><a href="{depth}privacy.html">Privacy & Terms</a></li>
+                        <li><a href="{depth}sanctuary.html">About / Our Philosophy</a></li>
+                        <li><a href="{depth}support.html">FAQ & Guide</a></li>
+                        <li><a href="{depth}logistics.html">Shipping & Delivery</a></li>
+                        <li><a href="{depth}warranty.html">Returns & Exchanges</a></li>
+                        <li><a href="{depth}audit.html">Privacy & Terms</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
