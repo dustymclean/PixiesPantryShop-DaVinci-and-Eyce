@@ -993,7 +993,7 @@ def generate_site():
                 <h4>Power in Numbers</h4>
                 <p>Joining our Discord helps us demonstrate community engagement to distributors, unlocking cheaper wholesale prices that we pass directly to you.</p>
                 <a href="{depth}community.html" class="link">Learn more</a>
-                <a href="https://discord.gg/dm8deA2u" target="_blank" class="btn" style="background: var(--gold); color: #000; padding: 8px; font-size: 11px; width: 100%; box-sizing: border-box;">Join the Mission</a>
+                <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank" class="btn" style="background: var(--gold); color: #000; padding: 8px; font-size: 11px; width: 100%; box-sizing: border-box;">Join the Mission</a>
             </div>
 
             <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 8px;">
@@ -1170,7 +1170,7 @@ def generate_site():
     <link rel="stylesheet" href="{depth}css/style.css">
 </head>
 <body>
-    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.gg/dm8deA2u" target="_blank">DISCORD.GG/DM8DEa2U</a></div>
+    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">DISCORD.COM/INVITE/PH4EHWXQAE</a></div>
     {sidebar}
     <div class="main-wrapper">
         <main class="main-content">
@@ -1218,7 +1218,7 @@ def generate_site():
             <div class="footer-bottom">
                 <p>&copy; 2026 PIXIE'S PANTRY. ALL RIGHTS RESERVED.</p>
                 <div class="footer-socials">
-                    <a href="https://discord.gg/dm8deA2u" target="_blank">Discord</a>
+                    <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">Discord</a>
                     <a href="#">Instagram</a>
                     <a href="#">Twitter</a>
                 </div>
@@ -1254,7 +1254,7 @@ def generate_site():
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.gg/dm8deA2u" target="_blank">DISCORD.GG/DM8DEa2U</a></div>
+    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">DISCORD.COM/INVITE/PH4EHWXQAE</a></div>
     {sidebar}
     <div class="main-wrapper">
         <main class="main-content" style="max-width: 800px;">
@@ -1273,7 +1273,7 @@ def generate_site():
                 <p>By simply joining the Discord, you are actively helping lower the cost of premium hardware for yourself and everyone else.</p>
                 <div style="margin-top: 40px; padding: 30px; background: #fafafa; border: 1px solid var(--border); border-radius: 12px; text-align: center;">
                     <h2 style="margin-top: 0;">Ready to lower prices?</h2>
-                    <a href="https://discord.gg/dm8deA2u" target="_blank" class="btn" style="background: var(--gold); color: #000; font-size: 16px; padding: 15px 30px; margin-top: 15px;">Join the Mission on Discord</a>
+                    <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank" class="btn" style="background: var(--gold); color: #000; font-size: 16px; padding: 15px 30px; margin-top: 15px;">Join the Mission on Discord</a>
                 </div>
             </div>
         </main>
@@ -1299,7 +1299,7 @@ def generate_site():
                 <div class="footer-col">
                     <h3>Client Services</h3>
                     <ul>
-                        <li><a href="https://discord.gg/dm8deA2u" target="_blank">Discord Support (Fastest)</a></li>
+                        <li><a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">Discord Support (Fastest)</a></li>
                         <li><a href="mailto:admin@pixies-pantry.com">Email Concierge</a></li>
                         <li><a href="shipping.html">Shipping & Delivery</a></li>
                         <li><a href="refunds.html">Returns & Exchanges</a></li>
@@ -1318,7 +1318,7 @@ def generate_site():
             <div class="footer-bottom">
                 <p>&copy; 2026 PIXIE'S PANTRY. ALL RIGHTS RESERVED.</p>
                 <div class="footer-socials">
-                    <a href="https://discord.gg/dm8deA2u" target="_blank">Discord</a>
+                    <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">Discord</a>
                     <a href="#">Instagram</a>
                     <a href="#">Twitter</a>
                 </div>
@@ -1373,7 +1373,7 @@ def generate_site():
     </style>
 </head>
 <body>
-    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.gg/dm8deA2u" target="_blank">DISCORD.GG/DM8DEa2U</a></div>
+    <div class="banner">JOIN THE DISCORD FOR EXCLUSIVE WHOLESALE PRICING &nbsp;·&nbsp; <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">DISCORD.COM/INVITE/PH4EHWXQAE</a></div>
     {sidebar}
     <div class="main-wrapper">
         <main class="main-content">
@@ -1404,7 +1404,7 @@ def generate_site():
                 <div class="footer-col">
                     <h3>Client Services</h3>
                     <ul>
-                        <li><a href="https://discord.gg/dm8deA2u" target="_blank">Discord Support (Fastest)</a></li>
+                        <li><a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">Discord Support (Fastest)</a></li>
                         <li><a href="mailto:admin@pixies-pantry.com">Email Concierge</a></li>
                         <li><a href="shipping.html">Shipping & Delivery</a></li>
                         <li><a href="refunds.html">Returns & Exchanges</a></li>
@@ -1423,7 +1423,7 @@ def generate_site():
             <div class="footer-bottom">
                 <p>&copy; 2026 PIXIE'S PANTRY. ALL RIGHTS RESERVED.</p>
                 <div class="footer-socials">
-                    <a href="https://discord.gg/dm8deA2u" target="_blank">Discord</a>
+                    <a href="https://discord.com/invite/ph4ehWXQAe" target="_blank">Discord</a>
                     <a href="#">Instagram</a>
                     <a href="#">Twitter</a>
                 </div>
