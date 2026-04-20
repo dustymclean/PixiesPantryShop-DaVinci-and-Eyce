@@ -216,24 +216,29 @@ def fetch_dyspensr_data():
     csv_db = {}
     if os.path.exists(CSV_PATH):
         with open(CSV_PATH, "r", encoding="utf-8") as f:
-            reader = list(csv.DictReader(f))
+            reader = csv.DictReader(f)
             for row in reader:
-                sku = row.get("SKU", "").strip()
+                if not row or not isinstance(row, dict):
+                    continue  # Skip empty or malformed rows
+                sku = row.get("SKU", "")
+                if not sku:
+                    continue  # Skip rows without SKU
+                sku = sku.strip()
                 title = row.get("Product Name", "").strip()
                 var = row.get("Variant", "").strip()
                 if not sku or sku.lower() == "none":
                     sku = "GEN-" + hashlib.md5((title + var).encode()).hexdigest()[:8].upper()
                 
-                status = row.get("Status", "").strip() or "Active"
+                status = row.get("Status", "Active") or "Active"
                 price = row.get("Your Retail Price", "")
-                cat = row.get("Product Type", "Accessories").strip() or "Accessories"
-                brand = row.get("Brand", "Premium").strip() or "Premium"
+                cat = row.get("Product Type", "Accessories") or "Accessories"
+                brand = row.get("Brand", "Premium") or "Premium"
                 
                 csv_db[sku] = {
-                    "Status": status,
-                    "Price": price,
-                    "Category": cat,
-                    "Brand": brand,
+                    "Status": status.strip() if status else "Active",
+                    "Price": price.strip() if price else "",
+                    "Category": cat.strip() if cat else "Accessories",
+                    "Brand": brand.strip() if brand else "Premium",
                     "Specs": row.get("Search Tags", ""),
                     "Featured": row.get("Featured", "No")
                 }
