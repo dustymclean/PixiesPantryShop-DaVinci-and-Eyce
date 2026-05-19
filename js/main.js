@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+
+    document.addEventListener('DOMContentLoaded', () => {
         // Init Cart Array from LocalStorage
         let cart = JSON.parse(localStorage.getItem('pixies_cart')) || [];
         
@@ -21,12 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const swatchesContainer = document.getElementById('swatches');
         const vLabel = document.getElementById('v-label');
         const addToCartBtn = document.getElementById('add-to-cart-btn');
-        const productGrid = document.getElementById('product-grid'); // Get the product grid container
         
-        // Sort elements
-        const sortBySelect = document.getElementById('sort-by');
-        let allProducts = Object.values(window.productsData); // Convert object to array for sorting
-
         // Cart elements
         const cartFloat = document.getElementById('cart-float');
         const cartBadge = document.getElementById('cart-badge');
@@ -41,73 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const cSubmit = document.getElementById('c_submit');
         
         let currentCheckoutItem = null;
-
-        // -- 0. PRODUCT RENDERING AND SORTING LOGIC --
-        function renderProductGrid(productsToRender) {
-            productGrid.innerHTML = ''; // Clear existing products
-            if (productsToRender.length === 0) {
-                productGrid.innerHTML = '<p>No products found in this category.</p>';
-                return;
-            }
-
-            productsToRender.forEach(p => {
-                const img = p.featured_image || (p.all_images ? p.all_images[0] : '');
-                const price = p.min_price || 0;
-                const handle = p.handle;
-                const cardHtml = `
-                    <div class="card" onclick="openModal('${handle}')">
-                        <img src="${img}" alt="${p.title}" class="card-img" loading="lazy">
-                        <div class="card-body">
-                            <div class="card-brand">${p.brand}</div>
-                            <h3 class="card-title">${p.title}</h3>
-                            <div class="card-price">$${price.toFixed(2)}</div>
-                            <span class="btn btn-outline" style="width:100%;box-sizing:border-box;">View Details</span>
-                        </div>
-                    </div>
-                `;
-                productGrid.innerHTML += cardHtml;
-            });
-        }
-
-                
         
-        // -- FILTER LOGIC --
-        const brandFilter = document.getElementById('filter-brand');
-        const catFilter = document.getElementById('filter-category');
-        
-        function applyFiltersAndSort() {
-            let filtered = [...allProducts];
-            
-            if (brandFilter && brandFilter.value !== 'all') {
-                filtered = filtered.filter(p => p.brand === brandFilter.value);
-            }
-            if (catFilter && catFilter.value !== 'all') {
-                filtered = filtered.filter(p => p.product_type === catFilter.value);
-            }
-            
-            const sortBy = sortBySelect ? sortBySelect.value : 'default';
-            switch (sortBy) {
-                case 'brand-asc':
-                    filtered.sort((a, b) => (a.brand||'').localeCompare(b.brand||''));
-                    break;
-                case 'category-asc':
-                    filtered.sort((a, b) => (a.product_type||'').localeCompare(b.product_type||''));
-                    break;
-                case 'price-asc':
-                    filtered.sort((a, b) => (a.min_price||0) - (b.min_price||0));
-                    break;
-            }
-            renderProductGrid(filtered);
-        }
-
-        if (sortBySelect) sortBySelect.addEventListener('change', applyFiltersAndSort);
-        if (brandFilter) brandFilter.addEventListener('change', applyFiltersAndSort);
-        if (catFilter) catFilter.addEventListener('change', applyFiltersAndSort);
-
-        // INITIAL RENDER
-        applyFiltersAndSort();
-
-// -- 1. CART LOGIC --
+        // -- 1. CART LOGIC --
         
         function updateCart() {
             localStorage.setItem('pixies_cart', JSON.stringify(cart));
@@ -294,13 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const address = `${document.getElementById('c_address').value}, ${document.getElementById('c_city').value}, ${document.getElementById('c_state').value} ${document.getElementById('c_zip').value}`;
             
             // Build Items string for Discord (truncate if extremely long)
-            let itemsString = cart.map(i => `${i.qty}x ${i.title} (${i.variant}) - $${(i.price * i.qty).toFixed(2)}`).join('\\n');
-            if(itemsString.length > 900) { itemsString = itemsString.substring(0, 900) + '\\n...and more'; }
+            let itemsString = cart.map(i => `${i.qty}x ${i.title} (${i.variant}) - $${(i.price * i.qty).toFixed(2)}`).join('\n');
+            if(itemsString.length > 900) { itemsString = itemsString.substring(0, 900) + '\n...and more'; }
             
             const grandTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2);
             
             const payload = {
-                username: "Pixie's Pantry Checkout",
+                username: "Pixie's Pantry Vapes Checkout",
                 embeds: [{
                     title: `🛍️ New Order: ${orderId}`,
                     color: 13938487, // Gold-ish
@@ -319,7 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             try {
-                const res = await fetch("https://discord.com/api/webhooks/1485760760939417811/p9gAtkJd3-Rw64TlaQK0FjbDrFHPRWq32pcEcl_ZghQ7qa17vnFZsJr3thAjO__xRosE", {
+                // New Pixies Pantry Vapes Discord Webhook
+                const res = await fetch("https://discord.com/api/webhooks/1485768342143766659/Ps4fmt1nHirK99gUhos00-fyZKJ8zE8Q8B6BwkOwPYurSzIIxKwune_IBkPWEIRA3W6x", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -327,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if(res.ok || res.status === 204) {
                     checkoutFeedback.style.color = "green";
-                    checkoutFeedback.textContent = `Success! Order ID: ${orderId}. We will contact you for payment.`;
+                    checkoutFeedback.innerHTML = `Success! Order ID: <strong>${orderId}</strong>.<br><br>🚨 <strong>COMPLETE PAYMENT TO FINALIZE</strong> 🚨<br>Orders are not processed until payment clears. Check your email/Discord for the secure payment link immediately.`;
                     checkoutForm.reset();
                     cart = []; // Empty cart on success
                     updateCart();
@@ -338,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cSubmit.textContent = "Submit Order";
                         checkoutFeedback.style.display = "none";
                         document.body.style.overflow = '';
-                    }, 4000);
+                    }, 8000);
                 } else {
                     throw new Error("Webhook failed");
                 }
@@ -350,6 +282,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
+        // 
+        // -- 4. SEARCH & FILTER LOGIC --
+        window.applyFilters = function() {
+            const searchInput = document.getElementById('searchInput');
+            const search = (searchInput ? searchInput.value : '').toLowerCase();
+            const brandFilter = document.getElementById('brandFilter') ? document.getElementById('brandFilter').value : 'all';
+            const catFilter = document.getElementById('catFilter') ? document.getElementById('catFilter').value : 'all';
+            
+            let visibleCount = 0;
+            document.querySelectorAll('.card').forEach(card => {
+                const name = card.dataset.name || '';
+                const brand = card.dataset.brand || '';
+                const cat = card.dataset.cat || '';
+                
+                const matchSearch = name.includes(search) || brand.includes(search);
+                const matchBrand = (brandFilter === 'all') || (brand === brandFilter);
+                const matchCat = (catFilter === 'all') || (cat === catFilter);
+                
+                if (matchSearch && matchBrand && matchCat) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            const countEl = document.getElementById('result-count');
+            if (countEl) countEl.textContent = visibleCount + ' products';
+        };
+        
+        window.sortGrid = function() {
+            const val = document.getElementById('sortSelect')?.value;
+            const grid = document.querySelector('.grid');
+            if (!grid || !val || val === 'default') return;
+            
+            const cards = Array.from(grid.querySelectorAll('.card'));
+            cards.sort((a, b) => {
+                if (val === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                if (val === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                if (val === 'name-az') return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+                return 0;
+            });
+            cards.forEach(c => grid.appendChild(c));
+        };
+
         
         // -- AGE GATE --
         (function() {
